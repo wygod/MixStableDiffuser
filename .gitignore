@@ -1,4 +1,4 @@
 venv/
-Mix/Mistral-7B-v0.1/
+Mix/Mistral-7B-v0.1/*
 SD/stabilityai/sdxl-turbo/*
 SD/stabilityai/stable-diffusion-2-1-base/*
