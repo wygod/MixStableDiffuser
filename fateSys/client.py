@@ -16,13 +16,13 @@ DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 def load_data():
     """Load CIFAR-10 (training and test set)."""
     transform = transforms.Compose(
-    [transforms.ToTensor(), transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))]
+        [transforms.ToTensor(), transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))]
     )
     trainset = CIFAR10(".", train=True, download=True, transform=transform)
     testset = CIFAR10(".", train=False, download=True, transform=transform)
     trainloader = DataLoader(trainset, batch_size=32, shuffle=True)
     testloader = DataLoader(testset, batch_size=32)
-    num_examples = {"trainset" : len(trainset), "testset" : len(testset)}
+    num_examples = {"trainset": len(trainset), "testset": len(testset)}
     return trainloader, testloader, num_examples
 
 
@@ -74,14 +74,17 @@ class Net(nn.Module):
         x = self.fc3(x)
         return x
 
+
 # Load model and data
 net = Net().to(DEVICE)
 trainloader, testloader, num_examples = load_data()
 
 
+def get_parameters(config):
+    return [val.cpu().numpy() for _, val in net.state_dict().items()]
+
+
 class CifarClient(fl.client.NumPyClient):
-    def get_parameters(self, config):
-        return [val.cpu().numpy() for _, val in net.state_dict().items()]
 
     def set_parameters(self, parameters):
         params_dict = zip(net.state_dict().keys(), parameters)
@@ -91,7 +94,7 @@ class CifarClient(fl.client.NumPyClient):
     def fit(self, parameters, config):
         self.set_parameters(parameters)
         train(net, trainloader, epochs=1)
-        return self.get_parameters(config={}), num_examples["trainset"], {}
+        return get_parameters(config={}), num_examples["trainset"], {}
 
     def evaluate(self, parameters, config):
         self.set_parameters(parameters)
@@ -100,4 +103,3 @@ class CifarClient(fl.client.NumPyClient):
 
 
 fl.client.start_client(server_address="[::]:8080", client=CifarClient().to_client())
-
